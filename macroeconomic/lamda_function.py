@@ -1,7 +1,10 @@
 import requests
 import pandas as pd
+from dotenv import load_dotenv
+import os
 
-api_key = "90OHC6NJN8V2M526I7VJ"
+load_dotenv()
+api_key = os.environ.get('KOREA_BANK_API_KEY')
 
 def fetch_data(endpoint, year):
     url = f'https://ecos.bok.or.kr/api/{endpoint}/{api_key}/json/kr/1/100/{year}'
