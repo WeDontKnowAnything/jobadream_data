@@ -1,10 +1,14 @@
 import requests
 import pandas as pd
-from dotenv import load_dotenv
-import os
+import json
+import boto3
+from io import BytesIO
 
-load_dotenv()
-api_key = os.environ.get('KOREA_BANK_API_KEY')
+s3 = boto3.client('s3')
+
+api_key = "SNCB3SOY7241VEJL4EAW"
+s3_bucket = "jobadream-raw-data-bucket" 
+s3_key_prefix = "category=macroeconomic/" 
 
 def fetch_data(endpoint, year):
     url = f'https://ecos.bok.or.kr/api/{endpoint}/{api_key}/json/kr/1/100/{year}'
@@ -22,7 +26,6 @@ def process_data(year):
         'Business Cycle': fetch_data('KeyStatisticList', year)
     }
 
-
     dfs = {
         key: pd.DataFrame(value['KeyStatisticList']['row']) for key, value in data.items()
     }
@@ -35,30 +38,34 @@ def process_data(year):
     dfs['Interest Rate'] = dfs['Interest Rate'][dfs['Interest Rate']['CLASS_NAME'] == '시장금리']
     dfs['Business Cycle'] = dfs['Business Cycle'][dfs['Business Cycle']['CLASS_NAME'] == '경기순환지표']
 
-
     for key in dfs.keys():
-        print(key)
         dfs[key]['YEAR'] = year
         dfs[key]['DATA_SOURCE'] = key
 
-
     return pd.concat(list(dfs.values()), ignore_index=True)
 
-def main():
-
-    years = range(2020, 2025)
-    dataframes = []
+def save_to_s3_parquet(df, year):
+    parquet_buffer = BytesIO()
+    df.to_parquet(parquet_buffer, compression='zstd')
     
+    s3_key = f"{s3_key_prefix}data_{year}.parquet"
+    s3.put_object(Bucket=s3_bucket, Key=s3_key, Body=parquet_buffer.getvalue())
+    print(f"Uploaded {s3_key} to S3")
+
+def lambda_handler(event, context):
+    years = range(2020, 2025)
+
     for year in years:
         combined_df = process_data(year)
-        dataframes.append(combined_df)
 
-    final_combined_df = pd.concat(dataframes, ignore_index=True)
+        save_to_s3_parquet(combined_df, year)
 
-    print(final_combined_df)
-
-    final_combined_df.to_csv('combined_data_2020_2024.csv', index=False)
-    final_combined_df.to_pickle('combined_data_2020_2024.pkl')
+    return {
+        'statusCode': 200,
+        'body': json.dumps('Parquet files uploaded successfully!')
+    }
 
 if __name__ == "__main__":
-    main()
+    test_event = {}
+    test_context = {}
+    print(lambda_handler(test_event, test_context))
