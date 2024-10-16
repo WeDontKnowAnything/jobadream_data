@@ -3,15 +3,13 @@ import pandas as pd
 import json
 import boto3
 from io import BytesIO
+from dotenv import load_dotenv
+import os
+from constants import API_KEY, S3_BUCKET, S3_KEY_PREFIX
 
 s3 = boto3.client('s3')
-
-api_key = "SNCB3SOY7241VEJL4EAW"
-s3_bucket = "jobadream-raw-data-bucket" 
-s3_key_prefix = "category=macroeconomic/" 
-
 def fetch_data(endpoint, year):
-    url = f'https://ecos.bok.or.kr/api/{endpoint}/{api_key}/json/kr/1/100/{year}'
+    url = f'https://ecos.bok.or.kr/api/{endpoint}/{API_KEY}/json/kr/1/100/{year}'
     response = requests.get(url)
     return response.json()
 
@@ -48,8 +46,8 @@ def save_to_s3_parquet(df, year):
     parquet_buffer = BytesIO()
     df.to_parquet(parquet_buffer, compression='zstd')
     
-    s3_key = f"{s3_key_prefix}data_{year}.parquet"
-    s3.put_object(Bucket=s3_bucket, Key=s3_key, Body=parquet_buffer.getvalue())
+    s3_key = f"{S3_KEY_PREFIX}data_{year}.parquet"
+    s3.put_object(Bucket=S3_BUCKET, Key=s3_key, Body=parquet_buffer.getvalue())
     print(f"Uploaded {s3_key} to S3")
 
 def lambda_handler(event, context):
