@@ -2,10 +2,7 @@ from enum import Enum
 
 
 class Path(Enum):
-    CSV2COMPARE_FILE = "../data/listed_corps/상장법인목록_2024_08_09.csv"
-
-    # 지정된 디렉토리 경로
-    CSV2CHANGE_DIR = "../data/financial_reports"
+    LISTED_PATH = "/data/listed_corps.csv"
 
 
 class Report(Enum):
@@ -19,7 +16,7 @@ class Report(Enum):
         "11011": "사업",
     }  # (3) 1분기보고서 : 11013 반기보고서 : 11012 3분기보고서 : 11014 사업보고서 : 11011
     FS_DIV = ["CFS", "OFS"]  # (4) CFS : 연결재무제표 OFS : 재무제표
-    START_CORP_NAME = "케이티앤지"  # 시작할 기업명
+    START_CORP_NAME = "3S"  # 시작할 기업명
 
 
 class Column(Enum):

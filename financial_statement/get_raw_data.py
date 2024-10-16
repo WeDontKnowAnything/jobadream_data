@@ -1,8 +1,9 @@
+import os
+
 import dart_fss
 import pandas as pd
 from constants import Path, Report
 from dotenv import load_dotenv
-import os
 
 load_dotenv()
 
@@ -20,32 +21,8 @@ def set_api_key(key_index):
 # corp = 회사
 # listed = 상장
 # delisted = 비상장
-def get_corps_df() -> pd.DataFrame:
-    all_corps = dart_fss.api.filings.get_corp_code()
-    all_corps_df = pd.DataFrame(all_corps)
-    corps_df = all_corps_df[all_corps_df["stock_code"].notnull()].reset_index(drop=True)
-    return corps_df
-
-
-# 상폐 기업 제거 함수
-def remove_delisted_corps(corp_df) -> pd.DataFrame:
-    # CSV 파일 읽기
-
-    compare_df = pd.read_csv(Path.CSV2COMPARE_FILE.value)
-
-    # 데이터 타입 변환
-    corp_df["stock_code"] = corp_df["stock_code"].astype(int)
-    compare_df["종목코드"] = compare_df["종목코드"].astype(int)
-
-    # 'stock_code'와 '종목코드'가 일치하는 행만 추출
-    merged_df = pd.merge(corp_df, compare_df, left_on="stock_code", right_on="종목코드")
-    result_df = merged_df[["corp_code", "corp_name", "stock_code"]].sort_values(
-        by="corp_name"
-    )
-
-    # 결과를 새로운 CSV 파일로 저장
-    # result_df.to_csv("listed_corps.csv", index=True)
-    return result_df
+def get_listed_corps_df() -> pd.DataFrame:
+    return pd.read_csv(Path.LISTED_PATH.value)
 
 
 def get_report(corp_df, corp_name, bsns_year, report_code):
@@ -78,14 +55,14 @@ def get_report(corp_df, corp_name, bsns_year, report_code):
             financial_report_df = pd.DataFrame(data)
             financial_report_df.to_csv(
                 f"../data/financial_reports/{corp_name} {bsns_year}년 {report_name} 재무보고서.csv",
-                index=True,
+                index=False,
                 encoding="utf-8-sig",
             )
     else:
         financial_report_df = pd.DataFrame(data)
         financial_report_df.to_csv(
             f"../data/financial_reports/{corp_name} {bsns_year}년 {report_name} 연결재무보고서.csv",
-            index=True,
+            index=False,
             encoding="utf-8-sig",
         )
 
@@ -106,9 +83,8 @@ def get_reports(public_companys_df):
 def main():
     for key_index in range(1, 3):
         set_api_key(key_index)
-        corps_df = get_corps_df()
-        listed_corps_df = remove_delisted_corps(corps_df)
-        get_reports(listed_corps_df)
+        corps_df = get_listed_corps_df()
+        get_reports(corps_df)
 
 
 if __name__ == "__main__":
