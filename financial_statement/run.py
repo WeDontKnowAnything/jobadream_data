@@ -1,4 +1,4 @@
-import change_column_name
+import financial_statement.tests.change_column_name as change_column_name
 import get_raw_data
 
 

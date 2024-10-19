@@ -1,9 +1,11 @@
 import os
 
+from constants import Path, Report
 import dart_fss
 import pandas as pd
-from constants import Path, Report
 from dotenv import load_dotenv
+import pyarrow.parquet as pq
+import pyarrow as pa
 
 load_dotenv()
 
@@ -48,8 +50,6 @@ def get_report(corp_df, corp_name, bsns_year, report_code):
                 api_key=None,
             )["list"]
         except:
-            # 해당 사업연도, 분기에 해당하는 재무제표가 없다면 다음 사업연도, 분기로 넘어간다.
-            # print(f"{corp_name}사의 {bsns_year}년 {report_name} 재무제표가 없습니다.")
             pass
         else:
             financial_report_df = pd.DataFrame(data)
@@ -61,7 +61,7 @@ def get_report(corp_df, corp_name, bsns_year, report_code):
     else:
         financial_report_df = pd.DataFrame(data)
         financial_report_df.to_csv(
-            f"../data/financial_reports/{corp_name} {bsns_year}년 {report_name} 연결재무보고서.csv",
+            f"../data/financial_reports/{corp_name}{bsns_year}{report_name}.csv",
             index=False,
             encoding="utf-8-sig",
         )
